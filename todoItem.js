@@ -19,6 +19,7 @@ todoItemTemplate.innerHTML = `
         justify-content: space-between;
         margin: 8px 0;
         background-color: #f8f9fc;
+        cursor: pointer;
     }
   </style>
 `;
@@ -27,9 +28,17 @@ class TodoItem extends HTMLElement {
   constructor() {
     super();
 
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.appendChild(todoItemTemplate.content.cloneNode(true));
+
+    this.$content = this.shadowRoot.querySelector("span");
+    this.$checkBox = this.shadowRoot.querySelector("input");
+    this.$removeButton = this.shadowRoot.querySelector("button");
+    this.$todoItemContainer = this.shadowRoot.querySelector("li");
+
     this.id = null;
-    this.checked = false;
     this.text = "";
+    this.checked = false;
   }
 
   set id(id) {
@@ -57,28 +66,29 @@ class TodoItem extends HTMLElement {
   }
 
   connectedCallback() {
-    this.attachShadow({ mode: "open" });
-    this.shadowRoot.appendChild(todoItemTemplate.content.cloneNode(true));
-    this.$todoItemContainer = this.shadowRoot.querySelector("li");
+    this.$todoItemContainer.addEventListener(
+      "click",
+      this.handleToggle.bind(this)
+    );
 
-    this.$checkBox = this.shadowRoot.querySelector("input");
-    this.$content = this.shadowRoot.querySelector("span");
-    this.$removeButton = this.shadowRoot.querySelector("button");
+    this.$checkBox.addEventListener("click", this.handleToggle.bind(this));
 
-    this.$removeButton.addEventListener("click", e => {
-      e.preventDefault();
-      this.dispatchEvent(new CustomEvent("onRemove", { detail: this.id }));
-    });
-
-    this.$checkBox.addEventListener("click", e => {
-      e.preventDefault();
-      this.dispatchEvent(new CustomEvent("onToggle", { detail: this.id }));
-    });
+    this.$removeButton.addEventListener("click", this.handleRemove.bind(this));
 
     this.render();
   }
 
   disconnectedCallback() {}
+
+  handleToggle(e) {
+    e.preventDefault();
+    this.dispatchEvent(new CustomEvent("onToggle", { detail: this.id }));
+  }
+
+  handleRemove(e){
+    e.stopPropagation();
+    this.dispatchEvent(new CustomEvent("onRemove", { detail: this.id }));
+  }
 
   render() {
     this.$content.innerHTML = this.text;

@@ -31,18 +31,17 @@ class TodoList extends HTMLElement {
   constructor() {
     super();
 
-    const todos = JSON.parse(localStorage.getItem("todos")) || [];
-
-    this.todos = todos;
-  }
-
-  connectedCallback() {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(todoListTemplate.content.cloneNode(true));
 
     this.$inputBox = this.shadowRoot.querySelector("todo-input");
     this.$listContainer = this.shadowRoot.querySelector("ul");
 
+    const todos = JSON.parse(localStorage.getItem("todos")) || [];
+    this.todos = todos;
+  }
+
+  connectedCallback() {
     this.$inputBox.addEventListener("onSubmit", this.addTodo.bind(this));
 
     this.renderList();
@@ -54,6 +53,13 @@ class TodoList extends HTMLElement {
     localStorage.setItem("todos", JSON.stringify(todos));
   }
 
+  updateTodos(newTodos){
+    this.todos = newTodos;
+    this.storeInLocalStorage(newTodos);
+
+    this.renderList();
+  }
+
   addTodo(e) {
     const newTodo = {
       id: new Date().getMilliseconds(),
@@ -63,21 +69,15 @@ class TodoList extends HTMLElement {
 
     const newTodos = [...this.todos, newTodo];
 
-    this.todos = newTodos;
-    this.storeInLocalStorage(newTodos);
-
-    this.renderList();
+    this.updateTodos(newTodos);
   }
 
   removeItem(e) {
     const id = e.detail;
 
     const newTodos = this.todos.filter(todo => todo.id !== id);
-    this.todos = newTodos;
 
-    this.storeInLocalStorage(newTodos);
-
-    this.renderList();
+    this.updateTodos(newTodos);
   }
 
   toggleItem(e) {
@@ -94,11 +94,7 @@ class TodoList extends HTMLElement {
       };
     });
 
-    this.todos = newTodos;
-
-    this.storeInLocalStorage(newTodos);
-
-    this.renderList();
+    this.updateTodos(newTodos);
   }
 
   renderList() {
